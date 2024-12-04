@@ -1,0 +1,17 @@
+<!-- card.component.html -->
+<div class="card-container">
+  <h2>Card ID Communication Demo</h2>
+  
+  <div class="action-section">
+    <button (click)="callAndroid()" class="primary-button">
+      Get Card ID from Android
+    </button>
+  </div>
+
+  <div class="result-section" *ngIf="result">
+    <h3>Response from Android:</h3>
+    <div class="result-box">
+      {{ result }}
+    </div>
+  </div>
+</div>

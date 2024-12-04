@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>視窗大小顯示與 Android 接口</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        #sizeDisplay, #resultDisplay {
+            font-size: 24px;
+            margin-top: 20px;
+            color: #0066cc;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>視窗大小與 Android 接口</h1>
+    <div id="sizeDisplay"></div>
+    <button onclick="callAndroidInterface('docarduid')">Do Card UID</button>
+    <button onclick="callAndroidInterface('domonitordarkmode')">Dark mode</button>
+    <button onclick="callAndroidInterface('doled0')">Do LED 0</button>
+    <button onclick="callAndroidInterface('doled1')">Do LED 1</button>
+    <button onclick="callAndroidInterface('doled2')">Do LED 2</button>
+    <div id="resultDisplay"></div>
+</div>
+
+<script>
+    function updateSize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        document.getElementById('sizeDisplay').innerHTML = `寬度: ${width}px<br>高度: ${height}px`;
+    }
+
+    function callAndroidInterface(interfaceName) {
+        console.log(`Call Android interface: ${interfaceName}`);
+        if (window.initialsetting && typeof window.initialsetting[interfaceName] === 'function') {
+            if (interfaceName === 'docarduid') {
+                // 為 docarduid 創建一個特殊的處理函數
+                window.initialsetting[interfaceName]('handleCardUidResult');
+            } else {
+                // 對於其他接口，我們暫時不傳遞參數
+                window.initialsetting[interfaceName]();
+            }
+        } else {
+            console.warn(`Android initialsetting interface ${interfaceName} is not available`);
+        }
+    }
+
+    // 處理 docarduid 的回調函數
+    function handleCardUidResult(result) {
+        document.getElementById('resultDisplay').innerHTML = `Card UID: ${result}`;
+    }
+
+    // 初始更新
+    updateSize();
+
+    // 當視窗大小改變時更新
+    window.addEventListener('resize', updateSize);
+</script>
+</body>
+</html>

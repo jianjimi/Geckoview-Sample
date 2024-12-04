@@ -1,0 +1,56 @@
+// card.component.scss
+.card-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  }
+  
+  .action-section {
+    margin: 20px 0;
+    text-align: center;
+  }
+  
+  .primary-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    
+    &:hover {
+      background-color: #0056b3;
+    }
+    
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+  
+  .result-section {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    
+    h3 {
+      color: #495057;
+      margin-bottom: 10px;
+    }
+    
+    .result-box {
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+  }
+  
