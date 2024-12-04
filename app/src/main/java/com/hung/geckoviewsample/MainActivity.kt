@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import com.hung.geckoviewsample.ui.theme.GeckoviewSampleTheme
 import org.mozilla.geckoview.GeckoRuntime
+import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 
@@ -31,9 +32,16 @@ class MainActivity : ComponentActivity() {
 fun GeckoViewScreen() {
     val context = LocalContext.current
 
+    // 初始化 GeckoView 設定
+    var settings = GeckoRuntimeSettings.Builder()
+        .consoleOutput(true)  // 啟用 console 輸出到 logcat
+        .debugLogging(true)   // 啟用除錯日誌
+        .javaScriptEnabled(true) // 啟用 JavaScript
+        .build()
+
     // 創建並記住 GeckoRuntime 實例
     val runtime = remember {
-        GeckoRuntime.create(context)
+        GeckoRuntime.create(context, settings)
     }
 
     // 創建並記住 GeckoSession 實例
