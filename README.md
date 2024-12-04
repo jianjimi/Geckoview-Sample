@@ -130,3 +130,17 @@ var settings = GeckoRuntimeSettings.Builder()
 ## 第五步：使用 Angular 開發網頁和 App 溝通
 
 請看 /app/src/main/assets/angular
+
+# 筆記
+
+Reference: [GeckoView WebExtensions 雙向通信總結 - Monica AI Chat](https://monica.im/share/chat?shareId=OfV5IMBNhjUFXJMH)
+
+## GeckoView 建立 javascript interface 的做法
+
+因為 WebView 已經封裝好許多邏輯，所以用法相對簡單，但是在 GeckoView 中，我們需要自己實作一個 WebExtension 來達到和網頁溝通的目的。
+所以在這個範例中，我們建立了一個 WebExtension，並且在 App 中實作一個 MessageDelegate 來接收網頁傳來的訊息。
+需要 messaging.js 和 background.js 這兩個檔案，這兩個檔案是 WebExtension 的基本檔案，可以參考 [WebExtension](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions) 來了解更多。
+
+## new CustomEvent 的 detail 不可以改
+
+`detail` 是 CustomEvent 中的一個特殊屬性名稱。這是 DOM 規範中定義的標準屬性。
