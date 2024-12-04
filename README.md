@@ -2,13 +2,13 @@
 
 ### build.gradle (app) 依賴
 
-```xml
+```
 implementation 'org.mozilla.geckoview:geckoview:115.0.20230726201356'
 ```
 
 ### build.gradle (project)
 
-```json
+```
 maven {
     url "https://maven.mozilla.org/maven2/"
 }
