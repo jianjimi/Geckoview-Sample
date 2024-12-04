@@ -63,4 +63,6 @@ dependencies {
     androidTestImplementation libs.androidx.ui.test.junit4
     debugImplementation libs.androidx.ui.tooling
     debugImplementation libs.androidx.ui.test.manifest
+    // https://mvnrepository.com/artifact/org.mozilla.geckoview/geckoview
+    implementation 'org.mozilla.geckoview:geckoview:115.0.20230726201356'
 }
