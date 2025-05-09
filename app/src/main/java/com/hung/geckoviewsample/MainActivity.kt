@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.Nullable
+import androidx.annotation.NonNull
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,6 +24,8 @@ import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtension.MessageDelegate
 import org.mozilla.geckoview.WebExtension.MessageSender
+import org.mozilla.geckoview.GeckoSession.PermissionDelegate
+import org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +61,32 @@ fun GeckoViewScreen() {
         GeckoSession().apply {
             open(runtime)
 //            loadUri("https://www.hung.services/size/")
-            loadUri("https://liuxiaogang.cn/ua.html")
+            loadUri("https://bi.bvtcc.com/dev")
+            
+            // 设置权限代理，允许视频自动播放
+            setPermissionDelegate(object : PermissionDelegate {
+                @Nullable
+                override fun onContentPermissionRequest(@NonNull session: GeckoSession, @NonNull perm: ContentPermission): GeckoResult<Int>? {
+                    // 允许所有权限请求，包括媒体自动播放
+                    return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW)
+                }
+                
+                // 实现onMediaPermissionRequest方法，但我们不需要此功能
+                override fun onMediaPermissionRequest(
+                    session: GeckoSession,
+                    uri: String,
+                    video: Array<PermissionDelegate.MediaSource>?,
+                    audio: Array<PermissionDelegate.MediaSource>?,
+                    callback: PermissionDelegate.MediaCallback
+                ) {
+                    // 自动允许媒体权限请求
+                    if (video != null && video.isNotEmpty()) {
+                        callback.grant(video[0], audio?.getOrNull(0))
+                    } else {
+                        callback.grant(null, audio?.getOrNull(0))
+                    }
+                }
+            })
         }
     }
 
