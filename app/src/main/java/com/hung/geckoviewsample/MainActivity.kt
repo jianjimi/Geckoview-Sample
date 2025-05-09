@@ -58,7 +58,7 @@ fun GeckoViewScreen() {
         GeckoSession().apply {
             open(runtime)
 //            loadUri("https://www.hung.services/size/")
-            loadUri("https://www.hung.services/android-view/")
+            loadUri("https://liuxiaogang.cn/ua.html")
         }
     }
 
