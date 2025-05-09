@@ -36,15 +36,23 @@ import android.view.InputDevice
 class MainActivity : ComponentActivity() {
     // 声明一个变量来保存GeckoView引用
     private var geckoView: GeckoView? = null
+    // 跟踪导航状态
+    private var canGoBack = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            GeckoViewScreen { view ->
-                // 保存GeckoView的引用
-                geckoView = view
-            }
+            GeckoViewScreen(
+                onGeckoViewCreated = { view ->
+                    // 保存GeckoView的引用
+                    geckoView = view
+                },
+                onCanGoBackChanged = { canGoBack ->
+                    // 更新当前Activity的返回状态
+                    this.canGoBack = canGoBack
+                }
+            )
         }
     }
     
@@ -52,17 +60,29 @@ class MainActivity : ComponentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
         
-        // 检查特殊按键（如TV遥控器的D-pad按键）
-        val isDirectionOrEnterKey = keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+        // 检查特殊按键（如TV遥控器的D-pad按键、菜单键和返回键）
+        val isSpecialKey = keyCode == KeyEvent.KEYCODE_DPAD_UP ||
                 keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
                 keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
                 keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
                 keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
                 keyCode == KeyEvent.KEYCODE_ENTER ||
-                keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+                keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER ||
+                keyCode == KeyEvent.KEYCODE_MENU
         
-        // 如果是方向键或确认键，直接传递给GeckoView
-        if (isDirectionOrEnterKey) {
+        // 对于返回键，我们需要特殊处理
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
+            if (canGoBack) {
+                // 如果可以返回上一页，则返回上一页
+                geckoView?.session?.goBack()
+                return true
+            }
+            // 如果不能返回上一页，则继续按Android系统的默认行为处理
+            return super.dispatchKeyEvent(event)
+        }
+        
+        // 如果是特殊键，直接传递给GeckoView
+        if (isSpecialKey) {
             // 将事件直接分发给GeckoView
             geckoView?.let { view ->
                 return view.dispatchKeyEvent(event)
@@ -75,7 +95,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun GeckoViewScreen(onGeckoViewCreated: (GeckoView) -> Unit = {}) {
+fun GeckoViewScreen(
+    onGeckoViewCreated: (GeckoView) -> Unit = {},
+    onCanGoBackChanged: (Boolean) -> Unit = {}
+) {
     val TAG = "GeckoViewSample"
     val mContext = LocalContext.current
     val EXTENSION_LOCATION = "resource://android/assets/messaging/"
@@ -133,6 +156,8 @@ fun GeckoViewScreen(onGeckoViewCreated: (GeckoView) -> Unit = {}) {
             setNavigationDelegate(object : NavigationDelegate {
                 override fun onCanGoBack(session: GeckoSession, enabled: Boolean) {
                     canGoBack = enabled
+                    // 通知Activity状态变化
+                    onCanGoBackChanged(enabled)
                 }
                 
                 override fun onCanGoForward(session: GeckoSession, enabled: Boolean) {
@@ -203,20 +228,6 @@ fun GeckoViewScreen(onGeckoViewCreated: (GeckoView) -> Unit = {}) {
                 isFocusable = true
                 isFocusableInTouchMode = true
                 requestFocus()
-                
-                // 返回键处理
-                setOnKeyListener { _, keyCode, event ->
-                    if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK) {
-                        if (canGoBack) {
-                            session.goBack()
-                            true // 事件已处理
-                        } else {
-                            false // 继续默认的返回操作
-                        }
-                    } else {
-                        false
-                    }
-                }
                 
                 // 调用回调，传递GeckoView引用
                 onGeckoViewCreated(this)
