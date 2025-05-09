@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -26,23 +29,61 @@ import org.mozilla.geckoview.WebExtension.MessageDelegate
 import org.mozilla.geckoview.WebExtension.MessageSender
 import org.mozilla.geckoview.GeckoSession.PermissionDelegate
 import org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission
+import org.mozilla.geckoview.GeckoSession.NavigationDelegate
+import android.view.KeyEvent
+import android.view.InputDevice
 
 class MainActivity : ComponentActivity() {
+    // 声明一个变量来保存GeckoView引用
+    private var geckoView: GeckoView? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            GeckoViewScreen()
+            GeckoViewScreen { view ->
+                // 保存GeckoView的引用
+                geckoView = view
+            }
         }
+    }
+    
+    // 处理按键事件，确保TV遥控器和键盘事件能被传递到GeckoView
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val keyCode = event.keyCode
+        
+        // 检查特殊按键（如TV遥控器的D-pad按键）
+        val isDirectionOrEnterKey = keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+                keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+                keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                keyCode == KeyEvent.KEYCODE_ENTER ||
+                keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+        
+        // 如果是方向键或确认键，直接传递给GeckoView
+        if (isDirectionOrEnterKey) {
+            // 将事件直接分发给GeckoView
+            geckoView?.let { view ->
+                return view.dispatchKeyEvent(event)
+            }
+        }
+        
+        // 其他按键使用默认处理
+        return super.dispatchKeyEvent(event)
     }
 }
 
 @Composable
-fun GeckoViewScreen() {
+fun GeckoViewScreen(onGeckoViewCreated: (GeckoView) -> Unit = {}) {
     val TAG = "GeckoViewSample"
     val mContext = LocalContext.current
     val EXTENSION_LOCATION = "resource://android/assets/messaging/"
     val mainHandler = android.os.Handler(Looper.getMainLooper())
+    
+    // 跟踪导航状态
+    var canGoBack by remember { mutableStateOf(false) }
+    var canGoForward by remember { mutableStateOf(false) }
 
     // 初始化 GeckoView 設定
     var settings = GeckoRuntimeSettings.Builder()
@@ -85,6 +126,17 @@ fun GeckoViewScreen() {
                     } else {
                         callback.grant(null, audio?.getOrNull(0))
                     }
+                }
+            })
+            
+            // 设置导航代理来跟踪导航状态
+            setNavigationDelegate(object : NavigationDelegate {
+                override fun onCanGoBack(session: GeckoSession, enabled: Boolean) {
+                    canGoBack = enabled
+                }
+                
+                override fun onCanGoForward(session: GeckoSession, enabled: Boolean) {
+                    canGoForward = enabled
                 }
             })
         }
@@ -146,6 +198,28 @@ fun GeckoViewScreen() {
         factory = { context ->
             GeckoView(context).apply {
                 setSession(session)
+                
+                // 设置视图获取焦点，这样可以接收键盘事件
+                isFocusable = true
+                isFocusableInTouchMode = true
+                requestFocus()
+                
+                // 返回键处理
+                setOnKeyListener { _, keyCode, event ->
+                    if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK) {
+                        if (canGoBack) {
+                            session.goBack()
+                            true // 事件已处理
+                        } else {
+                            false // 继续默认的返回操作
+                        }
+                    } else {
+                        false
+                    }
+                }
+                
+                // 调用回调，传递GeckoView引用
+                onGeckoViewCreated(this)
             }
         }
     )
