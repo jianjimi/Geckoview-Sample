@@ -32,12 +32,15 @@ import org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission
 import org.mozilla.geckoview.GeckoSession.NavigationDelegate
 import android.view.KeyEvent
 import android.view.InputDevice
+import android.app.AlertDialog
 
 class MainActivity : ComponentActivity() {
     // 声明一个变量来保存GeckoView引用
     private var geckoView: GeckoView? = null
     // 跟踪导航状态
     private var canGoBack = false
+    // 标记是否已经显示对话框，防止重复显示
+    private var isExitDialogShowing = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +57,30 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
+    }
+    
+    // 显示退出确认对话框
+    private fun showExitConfirmDialog() {
+        if (isExitDialogShowing) return
+        
+        isExitDialogShowing = true
+        
+        AlertDialog.Builder(this)
+            .setTitle("确认退出")
+            .setMessage("您确定要退出应用吗？")
+            .setPositiveButton("确定") { dialog, _ ->
+                dialog.dismiss()
+                isExitDialogShowing = false
+                super.onBackPressed()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+                isExitDialogShowing = false
+            }
+            .setOnCancelListener {
+                isExitDialogShowing = false
+            }
+            .show()
     }
     
     // 处理按键事件，确保TV遥控器和键盘事件能被传递到GeckoView
@@ -76,9 +103,11 @@ class MainActivity : ComponentActivity() {
                 // 如果可以返回上一页，则返回上一页
                 geckoView?.session?.goBack()
                 return true
+            } else {
+                // 如果不能返回上一页，则显示退出确认对话框
+                showExitConfirmDialog()
+                return true
             }
-            // 如果不能返回上一页，则继续按Android系统的默认行为处理
-            return super.dispatchKeyEvent(event)
         }
         
         // 如果是特殊键，直接传递给GeckoView
@@ -91,6 +120,16 @@ class MainActivity : ComponentActivity() {
         
         // 其他按键使用默认处理
         return super.dispatchKeyEvent(event)
+    }
+    
+    // 重写返回按钮处理
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (canGoBack) {
+            geckoView?.session?.goBack()
+        } else {
+            showExitConfirmDialog()
+        }
     }
 }
 
@@ -126,6 +165,7 @@ fun GeckoViewScreen(
             open(runtime)
 //            loadUri("https://www.hung.services/size/")
             loadUri("https://bi.bvtcc.com/dev")
+//            loadUri("http://192.168.0.105:5173/")
             
             // 设置权限代理，允许视频自动播放
             setPermissionDelegate(object : PermissionDelegate {
